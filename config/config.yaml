@@ -1,0 +1,16 @@
+data:
+  raw_path: "data/raw"
+  processed_path: "data/processed"
+  models_path: "data/models"
+
+model:
+  seq_length: 30
+  embedding_dim: 64
+  hidden_dim: 128
+  learning_rate: 0.001
+  epochs: 30
+
+system:
+  # CHANGE THESE TWO LINES WHEN SWITCHING APPS
+  app_name: "gimp"   # The ID (used for filenames)
+  target_app: "timeout 20s gimp --no-splash" # The actual command

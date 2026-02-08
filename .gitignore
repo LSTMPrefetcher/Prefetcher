@@ -1,0 +1,26 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+.env
+
+# Data and models
+data/models/
+data/processed/
+data/raw/
+models/
+*.pth
+*.pt
+*.ckpt
+
+# VS Code
+.vscode/
+
+# Misc
+*.log
+*.tmp
+*.bak
+results_chart.png
+Final_Project_Report.docx
