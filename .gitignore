@@ -15,6 +15,18 @@ models/
 *.pt
 *.ckpt
 
+# PyInstaller / Build artifacts
+build/
+dist/
+*.spec.bak
+*.egg-info/
+.PyInstaller/
+
+# Runtime data (local to each user)
+data/app_state.db
+data/collection/
+logs/
+
 # VS Code
 .vscode/
 
@@ -24,3 +36,5 @@ models/
 *.bak
 results_chart.png
 Final_Project_Report.docx
+*.zip
+*.exe

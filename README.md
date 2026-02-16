@@ -14,6 +14,33 @@ When you launch an application after a system reboot, it experiences "cold-start
 
 We train an LSTM model on real file access traces to predict which files an application will need next. Our system then proactively loads these predicted files into the Linux page cache before the application requests them.
 
+## 🎯 Windows Standalone Executable
+
+New! We now provide a **Windows standalone EXE** that requires no Python installation:
+
+### For End Users
+Simply download and run `AiFilePrefetcher.exe`:
+- **First 10 runs**: Automatically collects file access data
+- **Run 11**: Automatically trains the model (30-120 seconds)
+- **Run 12+**: Uses trained model for predictions
+
+All data stored locally on your machine. See [STANDALONE_APP_GUIDE.md](STANDALONE_APP_GUIDE.md) for details.
+
+### For Developers
+Build your own Windows EXE:
+
+```powershell
+# Prerequisites
+pip install pyinstaller torch pyyaml numpy
+
+# Build
+.\build_exe_standalone.ps1
+
+# Output: dist/AiFilePrefetcher/AiFilePrefetcher.exe
+```
+
+See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) and [QUICK_START_BUILD.md](QUICK_START_BUILD.md) for complete build instructions.
+
 ## Features
 
 - **Automated Data Collection**: Uses `strace` to capture file access patterns
