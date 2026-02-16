@@ -130,6 +130,64 @@ Application ready for next run
 
 ## 🛑 Potential Issues & Solutions
 
+### Issue 0: "User Account Control" Dialog (Normal & Expected) ⭐
+
+**What User Sees:**
+```
+┌─────────────────────────────────────────────┐
+│  User Account Control                       │
+│                                             │
+│  Do you want to allow this app to make      │
+│  changes to your device?                    │
+│                                             │
+│  AiFilePrefetcher.exe                      │
+│  Unknown publisher                          │
+│                                             │
+│  [Yes]  [No]                                │
+└─────────────────────────────────────────────┘
+```
+
+**Why?** The application needs administrator privileges to:
+- Monitor file system operations
+- Load files into memory cache
+- Optimize system performance
+
+This is **completely normal and safe**.
+
+**User's Solution:**
+1. Click **"Yes"** to allow
+2. Application starts
+3. Done!
+
+**Important Notes:**
+- ✅ This is safe (code is open source)
+- ✅ The app doesn't install anything
+- ✅ Only happens once per session
+- ✅ Standard for system utilities
+- ❌ Don't click "No" - app won't work without it
+
+---
+
+### Issue 0.5: "Unknown Publisher" Warning
+
+**What User Sees:**
+```
+"Unknown publisher" in the UAC dialog
+```
+
+**Why?** The application isn't code-signed (requires certificate)
+
+**User's Solution:**
+- Just click "Yes" anyway
+- It's safe, just not commercially signed
+
+**For IT:** If users are uncomfortable, you can:
+- Code-sign the executable (costs $100-300/year)
+- Or add to antivirus whitelist
+- Or document as "approved application"
+
+---
+
 ### Issue 1: "Windows protected your PC" SmartScreen Warning
 
 **What User Sees:**

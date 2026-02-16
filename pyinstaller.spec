@@ -17,6 +17,45 @@ from pathlib import Path
 # Project root
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
+# Admin privilege manifest
+manifest_content = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <assemblyIdentity
+    version="1.0.0.0"
+    processorArchitecture="*"
+    name="AiFilePrefetcher"
+    type="win32"
+  />
+  <description>AI File Prefetcher - Intelligent File Prefetching</description>
+
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity
+        type="win32"
+        name="Microsoft.Windows.Common-Controls"
+        version="6.0.0.0"
+        processorArchitecture="*"
+        publicKeyToken="6595b64144ccf1df"
+        language="*"
+      />
+    </dependentAssembly>
+  </dependency>
+
+  <!-- REQUEST ADMINISTRATOR PRIVILEGES -->
+  <requestedPrivileges>
+    <requestedExecutionLevel level="requireAdministrator" uiAccess="false"/>
+  </requestedPrivileges>
+
+  <!-- DPI Awareness for modern Windows -->
+  <asmv3:application xmlns:asmv3="http://schemas.microsoft.com/compatibility/windows/1">
+    <asmv3:windowsSettings xmlns="http://schemas.microsoft.com/compatibility/windows/1">
+      <dpiAware>true</dpiAware>
+    </asmv3:windowsSettings>
+  </asmv3:application>
+
+</assembly>
+"""
+
 # Data files and directories to include in the bundle
 datas = [
     # Pre-trained models
@@ -105,6 +144,7 @@ exe_onefile = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    manifest=manifest_content,  # Enable admin privilege request
 )
 
 # COLLECT (one-folder mode - faster loading than one-file)

@@ -18,13 +18,32 @@ We train an LSTM model on real file access traces to predict which files an appl
 
 New! We now provide a **Windows standalone EXE** that requires no Python installation:
 
+### Quick Links by Role
+
+📖 **[Documentation Overview](#documentation)**
+
+**👤 End Users** → Download & Run
+- See [END_USER_SETUP.md](END_USER_SETUP.md) for simple instructions
+- No Python installation needed
+- All data stored locally on your machine
+
+**👨‍💻 Developers** → Build from Source  
+- See [QUICK_START_BUILD.md](QUICK_START_BUILD.md) for build setup
+- See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for distribution
+- 30-60 minute build, portable ~350MB exe
+
+**🏢 IT/Admins** → Deploy to Multiple Machines
+- See [IT_DEPLOYMENT_GUIDE.md](IT_DEPLOYMENT_GUIDE.md) for enterprise deployment
+- Self-service, pre-installation, or SCCM/Intune options
+- Admin privilege handling for UAC
+
 ### For End Users
 Simply download and run `AiFilePrefetcher.exe`:
 - **First 10 runs**: Automatically collects file access data
 - **Run 11**: Automatically trains the model (30-120 seconds)
 - **Run 12+**: Uses trained model for predictions
 
-All data stored locally on your machine. See [STANDALONE_APP_GUIDE.md](STANDALONE_APP_GUIDE.md) for details.
+All data stored locally on your machine.
 
 ### For Developers
 Build your own Windows EXE:
@@ -39,7 +58,34 @@ pip install pyinstaller torch pyyaml numpy
 # Output: dist/AiFilePrefetcher/AiFilePrefetcher.exe
 ```
 
-See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) and [QUICK_START_BUILD.md](QUICK_START_BUILD.md) for complete build instructions.
+## 📖 Documentation
+
+Complete guides for different audiences:
+
+### For End Users
+| Guide | Purpose |
+|-------|---------|
+| [END_USER_SETUP.md](END_USER_SETUP.md) | How to download, install, and run the app |
+| [STANDALONE_APP_GUIDE.md](STANDALONE_APP_GUIDE.md) | Understanding what the app does and how it works |
+| [FAQ.md](FAQ.md) | Common questions and troubleshooting |
+| [ADMIN_ACCESS_GUIDE.md](ADMIN_ACCESS_GUIDE.md) | Why admin access is needed and how it works |
+
+### For Developers / Builders
+| Guide | Purpose |
+|-------|---------|
+| [QUICK_START_BUILD.md](QUICK_START_BUILD.md) | Step-by-step build instructions |
+| [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) | How to package and distribute the app |
+| [IMPLEMENTATION_CHECKLIST.md](IMPLEMENTATION_CHECKLIST.md) | Detailed testing and verification steps |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Technical design and codebase overview |
+
+### For IT / Enterprise Admins
+| Guide | Purpose |
+|-------|---------|
+| [IT_DEPLOYMENT_GUIDE.md](IT_DEPLOYMENT_GUIDE.md) | Enterprise deployment options (SCCM, Intune, Group Policy) |
+| [ADMIN_ACCESS_GUIDE.md](ADMIN_ACCESS_GUIDE.md) | Admin privilege requirements and handling |
+| [FAQ.md](FAQ.md) | Support resources and troubleshooting |
+
+**All guides included in the repository - start with the guide matching your role above.**
 
 ## Features
 

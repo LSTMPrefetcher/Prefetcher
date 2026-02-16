@@ -34,6 +34,59 @@ from src.trainer import train_model
 from src.prefetcher import run_prefetcher
 
 
+def check_admin_privileges():
+    """
+    Check if running with administrator privileges.
+    Returns True if running as admin, False otherwise.
+    """
+    try:
+        import ctypes
+        is_admin = ctypes.windll.shell.IsUserAnAdmin()
+        return is_admin
+    except Exception as e:
+        # If we can't check, assume we're not admin (safer assumption)
+        return False
+
+
+def request_admin_privileges():
+    """
+    Request admin privileges and relaunch if not already admin.
+    
+    Note: This is a backup in case the PyInstaller manifest doesn't work.
+    The manifest should handle this automatically.
+    """
+    import ctypes
+    import subprocess
+    
+    print("\n" + "="*70)
+    print("  ADMINISTRATOR PRIVILEGES REQUIRED")
+    print("="*70)
+    print("\nThis application requires administrator privileges to:")
+    print("  • Monitor file system operations")
+    print("  • Load files into memory cache")
+    print("  • Optimize system performance")
+    print("\nPlease:")
+    print("  1. Right-click AiFilePrefetcher.exe")
+    print("  2. Select 'Run as administrator'")
+    print("  3. Click 'Yes' on the User Account Control dialog")
+    print("\n" + "="*70 + "\n")
+    
+    # Try to automatically relaunch with elevated privileges
+    try:
+        # Re-run the script with admin privileges
+        ctypes.windll.shell.ShellExecuteEx(
+            lpVerb='runas',
+            lpFile=sys.executable,
+            lpParameters=f'"{sys.argv[0]}" {" ".join(sys.argv[1:])}',
+            nShow=5  # SW_SHOW
+        )
+    except Exception as e:
+        print(f"Note: Could not automatically elevate privileges ({e})")
+        print("Please manually run as administrator (right-click → Run as administrator)")
+    
+    sys.exit(1)
+
+
 def create_collection_wrapper(app_name: str) -> callable:
     """
     Create a wrapper around collect_traces that works with ExecutionDataDB.
@@ -120,6 +173,16 @@ def main():
     
     # Setup logging
     logger = setup_logging(logging.INFO)
+    
+    # Check for admin privileges (backup check in case manifest doesn't work)
+    if not check_admin_privileges():
+        # This should only happen if manifest didn't work
+        # (manifest should trigger UAC automatically)
+        logger.warning("Not running with admin privileges. Attempting to elevate...")
+        request_admin_privileges()
+        return 1
+    
+    logger.debug("Running with admin privileges ✓")
     
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="AI File Prefetcher - Standalone Application")
