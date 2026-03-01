@@ -94,6 +94,29 @@ If running `app_standalone.py` directly, install dependencies once:
 python app_standalone.py setup-deps
 ```
 
+### Linux Users (Primary OS)
+
+Use the included launcher script:
+
+```bash
+chmod +x run_prefetcher_cli.sh
+./run_prefetcher_cli.sh run
+```
+
+Other commands:
+
+```bash
+./run_prefetcher_cli.sh status
+./run_prefetcher_cli.sh doctor
+./run_prefetcher_cli.sh reset
+```
+
+If required libraries are missing in source mode:
+
+```bash
+python3 app_standalone.py setup-deps
+```
+
 ---
 
 ## 📋 What Happens on First Run

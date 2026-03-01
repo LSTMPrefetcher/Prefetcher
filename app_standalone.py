@@ -5,7 +5,6 @@ import logging
 import os
 import subprocess
 import sys
-from pathlib import Path
 
 # Ensure src module can be imported (works both in dev and packaged exe)
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -24,13 +23,21 @@ def check_admin_privileges():
     Check if running with administrator privileges.
     Returns True if running as admin, False otherwise.
     """
-    try:
-        import ctypes
-        is_admin = ctypes.windll.shell.IsUserAnAdmin()
-        return is_admin
-    except Exception:
-        # If we can't check, assume we're not admin (safer assumption)
-        return False
+    if os.name == "nt":
+        try:
+            import ctypes
+            is_admin = ctypes.windll.shell.IsUserAnAdmin()
+            return bool(is_admin)
+        except Exception:
+            return False
+
+    if hasattr(os, "geteuid"):
+        try:
+            return os.geteuid() == 0
+        except Exception:
+            return False
+
+    return True
 
 
 def request_admin_privileges():
@@ -40,35 +47,48 @@ def request_admin_privileges():
     Note: This is a backup in case the PyInstaller manifest doesn't work.
     The manifest should handle this automatically.
     """
-    import ctypes
-
     print("\n" + "="*70)
-    print("  ADMINISTRATOR PRIVILEGES REQUIRED")
+    print("  ADMINISTRATOR / ROOT PRIVILEGES REQUIRED")
     print("="*70)
-    print("\nThis application requires administrator privileges to:")
+    print("\nThis application requires elevated privileges to:")
     print("  • Monitor file system operations")
     print("  • Load files into memory cache")
     print("  • Optimize system performance")
-    print("\nPlease:")
-    print("  1. Right-click AiFilePrefetcher.exe")
-    print("  2. Select 'Run as administrator'")
-    print("  3. Click 'Yes' on the User Account Control dialog")
+
+    if os.name == "nt":
+        import ctypes
+        print("\nPlease:")
+        print("  1. Right-click AiFilePrefetcher.exe")
+        print("  2. Select 'Run as administrator'")
+        print("  3. Click 'Yes' on the User Account Control dialog")
+        print("\n" + "="*70 + "\n")
+        try:
+            ctypes.windll.shell.ShellExecuteEx(
+                lpVerb='runas',
+                lpFile=sys.executable,
+                lpParameters=f'"{sys.argv[0]}" {" ".join(sys.argv[1:])}',
+                nShow=5
+            )
+        except Exception as e:
+            print(f"Note: Could not automatically elevate privileges ({e})")
+            print("Please manually run as administrator (right-click → Run as administrator)")
+        sys.exit(1)
+
+    print("\nPlease run with sudo.")
     print("\n" + "="*70 + "\n")
-    
-    # Try to automatically relaunch with elevated privileges
+
+    if is_frozen_executable():
+        relaunch_cmd = ["sudo", sys.argv[0], *sys.argv[1:]]
+    else:
+        relaunch_cmd = ["sudo", sys.executable, sys.argv[0], *sys.argv[1:]]
+
     try:
-        # Re-run the script with admin privileges
-        ctypes.windll.shell.ShellExecuteEx(
-            lpVerb='runas',
-            lpFile=sys.executable,
-            lpParameters=f'"{sys.argv[0]}" {" ".join(sys.argv[1:])}',
-            nShow=5  # SW_SHOW
-        )
+        result = subprocess.run(relaunch_cmd, check=False)
+        sys.exit(result.returncode)
     except Exception as e:
-        print(f"Note: Could not automatically elevate privileges ({e})")
-        print("Please manually run as administrator (right-click → Run as administrator)")
-    
-    sys.exit(1)
+        print(f"[!] Could not relaunch with sudo automatically: {e}")
+        print("Run manually with: sudo python app_standalone.py run")
+        sys.exit(1)
 
 
 def create_collection_wrapper(app_name: str) -> callable:
@@ -160,10 +180,11 @@ def print_quick_manual():
     print("\n" + "=" * 70)
     print("AI FILE PREFETCHER - QUICK USER MANUAL")
     print("=" * 70)
-    print("1) Run once per session:      AiFilePrefetcher.exe run")
-    print("2) Check lifecycle status:    AiFilePrefetcher.exe status")
-    print("3) Reset training lifecycle:  AiFilePrefetcher.exe reset")
-    print("4) Health checks:             AiFilePrefetcher.exe doctor")
+    run_cmd = "AiFilePrefetcher.exe" if os.name == "nt" else "python app_standalone.py"
+    print(f"1) Run once per session:      {run_cmd} run")
+    print(f"2) Check lifecycle status:    {run_cmd} status")
+    print(f"3) Reset training lifecycle:  {run_cmd} reset")
+    print(f"4) Health checks:             {run_cmd} doctor")
     print("\nLifecycle:")
     print("  - Runs 1-10 : COLLECTION")
     print("  - Next run  : TRAINING")

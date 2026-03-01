@@ -68,12 +68,34 @@ AiFilePrefetcher.exe reset
 AiFilePrefetcher.exe guide
 ```
 
+### Linux CLI (Primary Deployment)
+For Linux-only environments, run via Python CLI or launcher script:
+
+```bash
+# Make launcher executable once
+chmod +x run_prefetcher_cli.sh
+
+# Run one lifecycle iteration (auto sudo if needed)
+./run_prefetcher_cli.sh run
+
+# Other commands
+./run_prefetcher_cli.sh status
+./run_prefetcher_cli.sh doctor
+./run_prefetcher_cli.sh reset
+```
+
 ### Dependency Strategy (Recommended)
 - **EXE users (recommended):** all Python libraries are bundled in the distribution folder. No Python/pip install required.
 - **Source users (optional):** install dependencies with:
 
 ```powershell
 python app_standalone.py setup-deps
+```
+
+Linux source setup:
+
+```bash
+python3 app_standalone.py setup-deps
 ```
 
 ### For Developers

@@ -209,6 +209,10 @@ Dependency behavior:
 - EXE mode: dependencies are bundled; no pip needed.
 - Source mode: run `python app_standalone.py setup-deps` once.
 
+Linux-first usage:
+- Use `./run_prefetcher_cli.sh run` for normal lifecycle execution.
+- Script auto-relaunches with `sudo` when root privileges are required.
+
 ---
 
 ## For Developers / System Administrators
