@@ -130,7 +130,7 @@ try {
 # Step 3: Verify required packages
 Write-Section "Step 3: Verifying Required Packages"
 
-$RequiredPackages = @('pyinstaller', 'torch', 'pyyaml', 'numpy')
+$RequiredPackages = @('pyinstaller', 'torch', 'pyyaml', 'numpy', 'psutil')
 
 foreach ($Package in $RequiredPackages) {
     Write-Info "Checking $Package..."

@@ -48,14 +48,51 @@
 
 1. Navigate to extracted folder
 2. **Double-click**: `AiFilePrefetcher.exe`
-3. A console window appears
-4. Application starts
+3. A console window appears with an easy menu
+4. Choose option `1` to run lifecycle now
 
 **That's it!** The application will:
 - Create necessary folders (data/, logs/)
 - Create database on first run
 - Start collecting data
 - Continue automatically
+
+### Step 3: Use Simple CLI Commands (Optional)
+
+You can also run explicit commands from Command Prompt/PowerShell:
+
+```powershell
+# Run one iteration (collection/training/production based on current phase)
+AiFilePrefetcher.exe run
+
+# Show lifecycle status
+AiFilePrefetcher.exe status
+
+# Health checks
+AiFilePrefetcher.exe doctor
+
+# Reset lifecycle state
+AiFilePrefetcher.exe reset
+
+# Show quick manual inside app
+AiFilePrefetcher.exe guide
+```
+
+---
+
+## 📦 Dependencies (Important)
+
+### For EXE Users (Default)
+- ✅ No Python installation needed
+- ✅ No pip commands needed
+- ✅ All required libraries are already bundled with the EXE folder
+
+### For Source-Code Users (Developer Mode)
+If running `app_standalone.py` directly, install dependencies once:
+
+```powershell
+python app_standalone.py setup-deps
+```
 
 ---
 

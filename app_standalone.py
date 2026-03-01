@@ -1,22 +1,10 @@
-# app_standalone.py
-"""
-Standalone application entry point for Windows EXE.
+"""Standalone application entry point for Windows EXE and source CLI usage."""
 
-This is the main entry point for PyInstaller. It orchestrates:
-1. First-run detection
-2. Data collection phase
-3. Model training phase
-4. Production/prediction phase
-
-Usage:
-    python app_standalone.py              # Normal execution
-    python app_standalone.py --reset      # Reset to first-run state
-"""
-
-import os
-import sys
 import argparse
 import logging
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 # Ensure src module can be imported (works both in dev and packaged exe)
@@ -24,12 +12,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
-from src.first_run import setup_logging
-from src.lifecycle import ApplicationLifecycle
-from src.persistence import ExecutionDataDB
-
-# Import the actual application functions
 from src.collector import collect_traces
+from src.first_run import FirstRunManager, setup_logging
+from src.lifecycle import ApplicationLifecycle
 from src.trainer import train_model
 from src.prefetcher import run_prefetcher
 
@@ -43,7 +28,7 @@ def check_admin_privileges():
         import ctypes
         is_admin = ctypes.windll.shell.IsUserAnAdmin()
         return is_admin
-    except Exception as e:
+    except Exception:
         # If we can't check, assume we're not admin (safer assumption)
         return False
 
@@ -56,8 +41,7 @@ def request_admin_privileges():
     The manifest should handle this automatically.
     """
     import ctypes
-    import subprocess
-    
+
     print("\n" + "="*70)
     print("  ADMINISTRATOR PRIVILEGES REQUIRED")
     print("="*70)
@@ -168,28 +152,216 @@ def create_production_wrapper(app_name: str) -> callable:
     return production_handler
 
 
-def main():
-    """Main application entry point."""
-    
-    # Setup logging
-    logger = setup_logging(logging.INFO)
-    
-    # Check for admin privileges (backup check in case manifest doesn't work)
+def is_frozen_executable() -> bool:
+    return bool(getattr(sys, "frozen", False))
+
+
+def print_quick_manual():
+    print("\n" + "=" * 70)
+    print("AI FILE PREFETCHER - QUICK USER MANUAL")
+    print("=" * 70)
+    print("1) Run once per session:      AiFilePrefetcher.exe run")
+    print("2) Check lifecycle status:    AiFilePrefetcher.exe status")
+    print("3) Reset training lifecycle:  AiFilePrefetcher.exe reset")
+    print("4) Health checks:             AiFilePrefetcher.exe doctor")
+    print("\nLifecycle:")
+    print("  - Runs 1-10 : COLLECTION")
+    print("  - Next run  : TRAINING")
+    print("  - Later runs: PRODUCTION")
+    if is_frozen_executable():
+        print("\nDependency mode: Bundled EXE (no Python/pip install required).")
+    else:
+        print("\nDependency mode: Source mode. Run 'setup-deps' once if needed.")
+    print("=" * 70)
+
+
+def install_dependencies(cpu_torch: bool = False) -> int:
+    if is_frozen_executable():
+        print("[✓] EXE mode detected. Dependencies are already bundled.")
+        print("[✓] No pip installation is required for end users.")
+        return 0
+
+    requirements_path = os.path.join(current_dir, "requirements.txt")
+    if not os.path.exists(requirements_path):
+        print(f"[!] requirements.txt not found at: {requirements_path}")
+        return 1
+
+    print("[*] Installing Python dependencies from requirements.txt...")
+    cmd = [sys.executable, "-m", "pip", "install", "-r", requirements_path]
+    if subprocess.run(cmd, check=False).returncode != 0:
+        print("[!] Dependency installation failed.")
+        return 1
+
+    if cpu_torch:
+        print("[*] Installing CPU-only PyTorch (optional optimization)...")
+        torch_cmd = [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "torch",
+            "--index-url",
+            "https://download.pytorch.org/whl/cpu",
+        ]
+        if subprocess.run(torch_cmd, check=False).returncode != 0:
+            print("[!] CPU-only PyTorch install failed (continuing with existing torch package).")
+
+    print("[✓] Dependencies installed successfully.")
+    return 0
+
+
+def run_doctor(app_name: str, app_version: str) -> int:
+    print("\n" + "=" * 70)
+    print("SYSTEM HEALTH CHECK (DOCTOR)")
+    print("=" * 70)
+
+    checks = []
+
+    for path in ["config", "data", "logs"]:
+        abs_path = os.path.join(current_dir, path)
+        exists = os.path.exists(abs_path)
+        checks.append((f"Path exists: {path}", exists))
+        if not exists:
+            try:
+                os.makedirs(abs_path, exist_ok=True)
+                checks.append((f"Path created: {path}", True))
+            except Exception:
+                checks.append((f"Path created: {path}", False))
+
+    config_file = os.path.join(current_dir, "config", "config.yaml")
+    checks.append(("Config file present", os.path.exists(config_file)))
+
+    writable_probe = os.path.join(current_dir, "logs", ".write_test")
+    try:
+        with open(writable_probe, "w") as f:
+            f.write("ok")
+        os.remove(writable_probe)
+        checks.append(("Workspace writable", True))
+    except Exception:
+        checks.append(("Workspace writable", False))
+
+    frm = FirstRunManager(app_name, app_version)
+    state = frm.get_or_initialize_state()
+    checks.append(("State DB initialized", bool(state)))
+
+    all_passed = True
+    for label, status in checks:
+        icon = "[✓]" if status else "[✗]"
+        print(f"{icon} {label}")
+        all_passed = all_passed and status
+
+    print("=" * 70)
+    return 0 if all_passed else 1
+
+
+def show_status(app_name: str, app_version: str):
+    frm = FirstRunManager(app_name, app_version)
+    state = frm.get_or_initialize_state()
+    recent = frm.db.get_recent_executions(app_name, limit=5)
+
+    print("\n" + "=" * 70)
+    print("APPLICATION STATUS")
+    print("=" * 70)
+    print(f"Name            : {state['app_name']}")
+    print(f"Version         : {state['version']}")
+    print(f"Execution Count : {state['execution_count']}")
+    print(f"Lifecycle Phase : {state['lifecycle_phase']}")
+    print(f"Model Trained   : {'Yes' if state['model_trained'] else 'No'}")
+    print(f"Last Execution  : {state['last_execution']}")
+    print("\nRecent Runs:")
+    if not recent:
+        print("  - No execution history yet")
+    else:
+        for item in recent:
+            print(f"  - {item['timestamp']} | {item['phase']} | {item['execution_id']}")
+    print("=" * 70)
+
+
+def execute_pipeline_once(app_name: str, app_version: str, logger) -> int:
     if not check_admin_privileges():
-        # This should only happen if manifest didn't work
-        # (manifest should trigger UAC automatically)
         logger.warning("Not running with admin privileges. Attempting to elevate...")
         request_admin_privileges()
         return 1
-    
-    logger.debug("Running with admin privileges ✓")
-    
+
+    lifecycle = ApplicationLifecycle(app_name, app_version)
+    collector_handler = create_collection_wrapper(app_name)
+    trainer_handler = create_training_wrapper(app_name)
+    production_handler = create_production_wrapper(app_name)
+
+    success = lifecycle.run(
+        collector_func=collector_handler,
+        trainer_func=trainer_handler,
+        predictor_func=production_handler,
+    )
+
+    print(lifecycle.get_status_summary())
+    lifecycle.print_progress()
+
+    return 0 if success else 1
+
+
+def interactive_menu(args, logger) -> int:
+    while True:
+        print("\n" + "=" * 70)
+        print("AI FILE PREFETCHER - USER CLI")
+        print("=" * 70)
+        print("1) Run prefetcher lifecycle now")
+        print("2) Show current status")
+        print("3) Run doctor checks")
+        print("4) Reset lifecycle state")
+        print("5) Install dependencies (source mode only)")
+        print("6) Show quick manual")
+        print("0) Exit")
+
+        choice = input("Select an option [0-6]: ").strip()
+        if choice == "1":
+            return execute_pipeline_once(args.app_name, args.version, logger)
+        if choice == "2":
+            show_status(args.app_name, args.version)
+            continue
+        if choice == "3":
+            run_doctor(args.app_name, args.version)
+            continue
+        if choice == "4":
+            lifecycle = ApplicationLifecycle(args.app_name, args.version)
+            lifecycle.first_run_manager.reset_state()
+            print("\n[✓] Application state reset. Next run starts collection flow.")
+            continue
+        if choice == "5":
+            install_dependencies(cpu_torch=False)
+            continue
+        if choice == "6":
+            print_quick_manual()
+            continue
+        if choice == "0":
+            print("[✓] Exiting.")
+            return 0
+        print("[!] Invalid choice. Please enter a number from 0 to 6.")
+
+
+def main():
+    """Main application entry point."""
+
+    # Setup logging
+    logger = setup_logging(logging.INFO)
+
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="AI File Prefetcher - Standalone Application")
+    parser = argparse.ArgumentParser(description="AI File Prefetcher - User-friendly standalone CLI")
+    subparsers = parser.add_subparsers(dest="command")
+
+    subparsers.add_parser("run", help="Run one lifecycle iteration (collection/training/production)")
+    subparsers.add_parser("status", help="Show lifecycle status and recent runs")
+    subparsers.add_parser("doctor", help="Run health checks (paths, config, DB, write access)")
+    subparsers.add_parser("reset", help="Reset lifecycle state to collection mode")
+    deps_parser = subparsers.add_parser("setup-deps", help="Install Python dependencies (source mode)")
+    deps_parser.add_argument("--cpu-torch", action="store_true", help="Install CPU-only PyTorch wheel")
+    subparsers.add_parser("guide", help="Show quick usage manual")
+
+    parser.add_argument("--interactive", action="store_true", help="Open interactive CLI menu")
     parser.add_argument(
         "--reset",
         action="store_true",
-        help="Reset application state (WARNING: clears all execution history)"
+        help="Backward-compatible flag for reset command"
     )
     parser.add_argument(
         "--debug",
@@ -204,48 +376,55 @@ def main():
     parser.add_argument(
         "--version",
         default="1.0",
-        help="Application version (default: 1.0)"
+        help="Application version profile (default: 1.0)"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Adjust logging level
     if args.debug:
         for handler in logger.handlers:
             handler.setLevel(logging.DEBUG)
         logger.setLevel(logging.DEBUG)
         logger.debug("Debug mode enabled")
-    
+
+    if args.reset and args.command is None:
+        args.command = "reset"
+
+    if args.interactive and args.command is None:
+        return interactive_menu(args, logger)
+
+    if args.command is None:
+        return interactive_menu(args, logger)
+
     try:
-        # Create lifecycle manager
-        lifecycle = ApplicationLifecycle(args.app_name, args.version)
-        
-        # Check if reset requested
-        if args.reset:
+        if args.command == "run":
+            return execute_pipeline_once(args.app_name, args.version, logger)
+
+        if args.command == "status":
+            show_status(args.app_name, args.version)
+            return 0
+
+        if args.command == "doctor":
+            return run_doctor(args.app_name, args.version)
+
+        if args.command == "reset":
+            lifecycle = ApplicationLifecycle(args.app_name, args.version)
             logger.warning("Resetting application state...")
             lifecycle.first_run_manager.reset_state()
-            print("\n[✓] Application state reset. Next run will be treated as first-run.")
+            print("\n[✓] Application state reset. Next run starts collection flow.")
             return 0
-        
-        # Create handler functions
-        collector_handler = create_collection_wrapper(args.app_name)
-        trainer_handler = create_training_wrapper(args.app_name)
-        production_handler = create_production_wrapper(args.app_name)
-        
-        # Execute application
-        success = lifecycle.run(
-            collector_func=collector_handler,
-            trainer_func=trainer_handler,
-            predictor_func=production_handler
-        )
-        
-        # Print status
-        print(lifecycle.get_status_summary())
-        lifecycle.print_progress()
-        
-        # Return appropriate exit code
-        return 0 if success else 1
-        
+
+        if args.command == "setup-deps":
+            return install_dependencies(cpu_torch=args.cpu_torch)
+
+        if args.command == "guide":
+            print_quick_manual()
+            return 0
+
+        print("[!] Unknown command. Use --help to see available commands.")
+        return 1
+
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
         print(f"\n[!] Application error: {e}")

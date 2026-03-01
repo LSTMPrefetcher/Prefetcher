@@ -83,6 +83,7 @@ a = Analysis(
         'torch.utils.data',
         'yaml',
         'numpy',
+        'psutil',
         'sqlite3',
         'json',
         'os',

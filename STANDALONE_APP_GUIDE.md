@@ -180,21 +180,34 @@ AiFilePrefetcher/
 You can run the application with command-line options:
 
 ```powershell
-# Normal execution
+# Interactive menu (default)
 AiFilePrefetcher.exe
 
-# Enable debug mode (verbose logging)
-AiFilePrefetcher.exe --debug
+# Run one lifecycle iteration
+AiFilePrefetcher.exe run
+
+# Show lifecycle status
+AiFilePrefetcher.exe status
+
+# Run health checks
+AiFilePrefetcher.exe doctor
 
 # Reset application state (start over)
-AiFilePrefetcher.exe --reset
+AiFilePrefetcher.exe reset
 
-# Specify app name (if using multiple profiles)
-AiFilePrefetcher.exe --app-name "chrome"
+# Show built-in quick manual
+AiFilePrefetcher.exe guide
 
-# Combine options
-AiFilePrefetcher.exe --debug --reset
+# Enable debug logs for any command
+AiFilePrefetcher.exe --debug run
+
+# Optional profile selection
+AiFilePrefetcher.exe --app-name "chrome" run
 ```
+
+Dependency behavior:
+- EXE mode: dependencies are bundled; no pip needed.
+- Source mode: run `python app_standalone.py setup-deps` once.
 
 ---
 

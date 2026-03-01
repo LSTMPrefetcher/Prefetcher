@@ -45,6 +45,37 @@ Simply download and run `AiFilePrefetcher.exe`:
 
 All data stored locally on your machine.
 
+### EXE CLI (Easy Mode)
+The standalone EXE now includes a simple command-line interface and interactive menu.
+
+```powershell
+# Open interactive menu (default if no command)
+AiFilePrefetcher.exe
+
+# Run one lifecycle iteration
+AiFilePrefetcher.exe run
+
+# Show current lifecycle status
+AiFilePrefetcher.exe status
+
+# Health checks (paths/config/DB/write access)
+AiFilePrefetcher.exe doctor
+
+# Reset lifecycle state
+AiFilePrefetcher.exe reset
+
+# Show built-in quick manual
+AiFilePrefetcher.exe guide
+```
+
+### Dependency Strategy (Recommended)
+- **EXE users (recommended):** all Python libraries are bundled in the distribution folder. No Python/pip install required.
+- **Source users (optional):** install dependencies with:
+
+```powershell
+python app_standalone.py setup-deps
+```
+
 ### For Developers
 Build your own Windows EXE:
 
