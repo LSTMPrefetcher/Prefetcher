@@ -12,5 +12,5 @@ model:
 
 system:
   # CHANGE THESE TWO LINES WHEN SWITCHING APPS
-  app_name: "gimp"   # The ID (used for filenames)
-  target_app: "timeout 20s gimp --no-splash" # The actual command
+  app_name: "pyprobe"   # The ID (used for filenames)
+  target_app: 'python3 -c "import json,ssl,sqlite3,subprocess,math,hashlib"' # The actual command
